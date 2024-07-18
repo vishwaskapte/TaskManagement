@@ -20,10 +20,10 @@ namespace TaskManagement.API.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetAll()
+        public async Task<IActionResult> GetAll()
         {
             //Get Data From Database - Domain Model
-            var tasks = dbContext.Taskss.ToList();
+            var tasks = await dbContext.Taskss.ToListAsync();
 
             //Map Domain Models to DTOs
             var tasksDto = new List<TasksDto>();
@@ -42,10 +42,10 @@ namespace TaskManagement.API.Controllers
 
         [HttpGet]
         [Route("{id}")]
-        public IActionResult GetById([FromRoute]int id)
+        public async Task<IActionResult> GetById([FromRoute]int id)
         {
             //Get Data From Database - Domain Model
-            var tasks = dbContext.Taskss.FirstOrDefault(x => x.TaskId == id);
+            var tasks = await dbContext.Taskss.FirstOrDefaultAsync(x => x.TaskId == id);
 
             if (tasks == null) { return NotFound(); }
 
@@ -64,7 +64,7 @@ namespace TaskManagement.API.Controllers
         }
 
         [HttpPost]
-        public IActionResult Create([FromBody]AddTaskRequestDto taskRequestDto) 
+        public async Task<IActionResult> Create([FromBody]AddTaskRequestDto taskRequestDto) 
         {
             //Map or convert DTO to Domain Model
             var taskDomainModel = new Tasks
@@ -76,8 +76,8 @@ namespace TaskManagement.API.Controllers
             };
 
             //Use Domain Model to Create Tasks
-            dbContext.Taskss.Add(taskDomainModel);
-            dbContext.SaveChanges();
+            await dbContext.Taskss.AddAsync(taskDomainModel);
+            await dbContext.SaveChangesAsync();
 
             //Map Domain Model to DTO
 
@@ -95,10 +95,10 @@ namespace TaskManagement.API.Controllers
 
         [HttpPut]
         [Route("{id}")]
-        public IActionResult Update([FromRoute]int id, [FromBody]UpdateTaskRequestDto updateTaskRequestDto) 
+        public async Task<IActionResult> Update([FromRoute]int id, [FromBody]UpdateTaskRequestDto updateTaskRequestDto) 
         {
             //check if task exist
-            var taskDomainModel = dbContext.Taskss.FirstOrDefault(x => x.TaskId == id);
+            var taskDomainModel = await dbContext.Taskss.FirstOrDefaultAsync(x => x.TaskId == id);
 
             if(taskDomainModel == null)
             {
@@ -111,7 +111,7 @@ namespace TaskManagement.API.Controllers
             taskDomainModel.DueDate = updateTaskRequestDto.DueDate;
             taskDomainModel.StatusId = updateTaskRequestDto.StatusId;
 
-            dbContext.SaveChanges();
+            await dbContext.SaveChangesAsync();
 
             //Map Domain Models to DTOs
             var tasksDto = new TasksDto()
@@ -128,10 +128,10 @@ namespace TaskManagement.API.Controllers
 
         [HttpDelete]
         [Route("{id}")]
-        public IActionResult Delete([FromRoute]int id) 
+        public async Task<IActionResult> Delete([FromRoute]int id) 
         {
             //check if task exist
-            var taskDomainModel = dbContext.Taskss.FirstOrDefault(x => x.TaskId == id);
+            var taskDomainModel = await dbContext.Taskss.FirstOrDefaultAsync(x => x.TaskId == id);
 
             if (taskDomainModel == null)
             {
@@ -140,7 +140,7 @@ namespace TaskManagement.API.Controllers
 
             //Delete Tasks
             dbContext.Taskss.Remove(taskDomainModel);
-            dbContext.SaveChanges();
+            await dbContext.SaveChangesAsync();
 
             //Map Domain Models to DTOs
             var tasksDto = new TasksDto()
