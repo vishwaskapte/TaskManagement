@@ -11,6 +11,7 @@ namespace TaskManagement.API.Mappings
             CreateMap<TasksDto, Tasks>().ReverseMap();
             CreateMap<AddTaskRequestDto, Tasks>().ReverseMap();
             CreateMap<UpdateTaskRequestDto, Tasks>().ReverseMap();
+            CreateMap<Status, StatusDTO>().ReverseMap();
         }
     }
 }

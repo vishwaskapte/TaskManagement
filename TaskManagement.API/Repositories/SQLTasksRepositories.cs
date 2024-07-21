@@ -38,7 +38,7 @@ namespace TaskManagement.API.Repositories
 
         public async Task<List<Tasks>> GetAllAsync()
         {
-            return await dbContext.Taskss.ToListAsync();
+            return await dbContext.Taskss.Include("Status").ToListAsync();
         }
 
         public async Task<Tasks?> GetByIdAsync(int id)
