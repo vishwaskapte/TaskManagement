@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
+using TaskManagement.API.CustomActionFilters;
 using TaskManagement.API.Data;
 using TaskManagement.API.Models.Domain;
 using TaskManagement.API.Models.DTO;
@@ -50,52 +51,41 @@ namespace TaskManagement.API.Controllers
         }
 
         [HttpPost]
+        [ValidateModel]
         public async Task<IActionResult> Create([FromBody]AddTaskRequestDto taskRequestDto) 
         {
-            if (ModelState.IsValid)
-            {
-                //Map or convert DTO to Domain Model
-                var taskDomainModel = mapper.Map<Tasks>(taskRequestDto);
+            //Map or convert DTO to Domain Model
+            var taskDomainModel = mapper.Map<Tasks>(taskRequestDto);
 
-                //Use Domain Model to Create Tasks
-                taskDomainModel = await tasksRepositories.CreateAsync(taskDomainModel);
+            //Use Domain Model to Create Tasks
+            taskDomainModel = await tasksRepositories.CreateAsync(taskDomainModel);
 
-                //Map Domain Model to DTO
-                var taskDto = mapper.Map<TasksDto>(taskDomainModel);
+            //Map Domain Model to DTO
+            var taskDto = mapper.Map<TasksDto>(taskDomainModel);
 
-                return CreatedAtAction(nameof(GetById), new { id = taskDomainModel.TaskId }, taskDomainModel);
-            } else
-            {
-                return BadRequest(ModelState);
-            }   
+            return CreatedAtAction(nameof(GetById), new { id = taskDomainModel.TaskId }, taskDomainModel);
         }
 
         [HttpPut]
         [Route("{id}")]
+        [ValidateModel]
         public async Task<IActionResult> Update([FromRoute]int id, [FromBody]UpdateTaskRequestDto updateTaskRequestDto) 
         {
-            if (ModelState.IsValid)
+            //Map DTO to Domain Model
+            var TasksDomainModel = mapper.Map<Tasks>(updateTaskRequestDto);
+
+            //check if task exist
+            TasksDomainModel = await tasksRepositories.UpdateAsync(id, TasksDomainModel);
+
+            if (TasksDomainModel == null)
             {
-                //Map DTO to Domain Model
-                var TasksDomainModel = mapper.Map<Tasks>(updateTaskRequestDto);
-
-                //check if task exist
-                TasksDomainModel = await tasksRepositories.UpdateAsync(id, TasksDomainModel);
-
-                if (TasksDomainModel == null)
-                {
-                    return NotFound();
-                }
-
-                //Map Domain Models to DTOs
-                var taskDto = mapper.Map<TasksDto>(TasksDomainModel);
-
-                return Ok(taskDto);
+                return NotFound();
             }
-            else
-            {
-                return BadRequest(ModelState);
-            }
+
+            //Map Domain Models to DTOs
+            var taskDto = mapper.Map<TasksDto>(TasksDomainModel);
+
+            return Ok(taskDto);
         }
 
         [HttpDelete]
