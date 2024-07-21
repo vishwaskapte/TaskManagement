@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
@@ -15,11 +16,13 @@ namespace TaskManagement.API.Controllers
     {
         private readonly TaskManagementDbContext dbContext;
         private readonly ITasks tasksRepositories;
+        private readonly IMapper mapper;
 
-        public TasksController(TaskManagementDbContext DbContext, ITasks tasksRepositories)
+        public TasksController(TaskManagementDbContext DbContext, ITasks tasksRepositories, IMapper mapper)
         {
             this.dbContext = DbContext;
             this.tasksRepositories = tasksRepositories;
+            this.mapper = mapper;
         }
 
         [HttpGet]
@@ -28,19 +31,8 @@ namespace TaskManagement.API.Controllers
             //Get Data From Database - Repositories Model
             var tasks = await tasksRepositories.GetAllAsync();
 
-            //Map Domain Models to DTOs
-            var tasksDto = new List<TasksDto>();
-            foreach (var task in tasks) {
-                tasksDto.Add(new TasksDto()
-                {
-                    TaskId = task.TaskId,
-                    Title = task.Title,
-                    Description = task.Description,
-                    DueDate = task.DueDate,
-                    StatusId = task.StatusId
-                });
-            }
-            return Ok(tasksDto);
+            //Return DTO's
+             return Ok(mapper.Map<List<TasksDto>>(tasks));
         }
 
         [HttpGet]
@@ -52,17 +44,8 @@ namespace TaskManagement.API.Controllers
 
             if (tasks == null) { return NotFound(); }
 
-            //Map Domain Models to DTOs
-            var tasksDto = new TasksDto()
-            {
-                TaskId = tasks.TaskId,
-                Title = tasks.Title,
-                Description = tasks.Description,
-                DueDate = tasks.DueDate,
-                StatusId = tasks.StatusId
-            };
-
-            return Ok(tasksDto);
+            //Return DTO's
+            return Ok(mapper.Map<TasksDto>(tasks));
 
         }
 
@@ -70,29 +53,14 @@ namespace TaskManagement.API.Controllers
         public async Task<IActionResult> Create([FromBody]AddTaskRequestDto taskRequestDto) 
         {
             //Map or convert DTO to Domain Model
-            var taskDomainModel = new Tasks
-            {
-                Title = taskRequestDto.Title,
-                Description = taskRequestDto.Description,
-                DueDate = taskRequestDto.DueDate,
-                StatusId = taskRequestDto.StatusId
-            };
+            var taskDomainModel = mapper.Map<Tasks>(taskRequestDto);
 
             //Use Domain Model to Create Tasks
-            await dbContext.Taskss.AddAsync(taskDomainModel);
-            await dbContext.SaveChangesAsync();
+            taskDomainModel = await tasksRepositories.CreateAsync(taskDomainModel);
 
             //Map Domain Model to DTO
-
-            var TasksDto = new TasksDto()
-            {
-                TaskId = taskDomainModel.TaskId,
-                Title = taskRequestDto.Title,
-                Description = taskRequestDto.Description,
-                DueDate = taskRequestDto.DueDate,
-                StatusId = taskRequestDto.StatusId
-            };
-
+            var taskDto = mapper.Map<TasksDto>(taskDomainModel);
+          
             return CreatedAtAction(nameof(GetById), new { id = taskDomainModel.TaskId }, taskDomainModel);
         }
 
@@ -101,13 +69,7 @@ namespace TaskManagement.API.Controllers
         public async Task<IActionResult> Update([FromRoute]int id, [FromBody]UpdateTaskRequestDto updateTaskRequestDto) 
         {
             //Map DTO to Domain Model
-            var TasksDomainModel = new Tasks
-            {
-                Title = updateTaskRequestDto.Title,
-                Description = updateTaskRequestDto.Description,
-                DueDate = updateTaskRequestDto.DueDate,
-                StatusId = updateTaskRequestDto.StatusId
-            };
+            var TasksDomainModel = mapper.Map<Tasks>(updateTaskRequestDto);
 
             //check if task exist
             TasksDomainModel = await tasksRepositories.UpdateAsync(id, TasksDomainModel);
@@ -117,19 +79,10 @@ namespace TaskManagement.API.Controllers
                 return NotFound();
             }
 
-            await dbContext.SaveChangesAsync();
-
             //Map Domain Models to DTOs
-            var tasksDto = new TasksDto()
-            {
-                TaskId = TasksDomainModel.TaskId,
-                Title = TasksDomainModel.Title,
-                Description = TasksDomainModel.Description,
-                DueDate = TasksDomainModel.DueDate,
-                StatusId = TasksDomainModel.StatusId
-            };
+            var taskDto = mapper.Map<TasksDto>(TasksDomainModel);
 
-            return Ok(tasksDto);
+            return Ok(taskDto);
         }
 
         [HttpDelete]
@@ -145,18 +98,10 @@ namespace TaskManagement.API.Controllers
             }
 
             //Delete Tasks
-            dbContext.Taskss.Remove(taskDomainModel);
-            await dbContext.SaveChangesAsync();
+            taskDomainModel = await tasksRepositories.DeleteAsync(id);
 
             //Map Domain Models to DTOs
-            var tasksDto = new TasksDto()
-            {
-                TaskId = taskDomainModel.TaskId,
-                Title = taskDomainModel.Title,
-                Description = taskDomainModel.Description,
-                DueDate = taskDomainModel.DueDate,
-                StatusId = taskDomainModel.StatusId
-            };
+            var tasksDto = mapper.Map<TasksDto>(taskDomainModel);
 
             return Ok(tasksDto);
         }
