@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using TaskManagement.API.Data;
 using TaskManagement.API.Models.Domain;
 using TaskManagement.API.Models.DTO;
+using TaskManagement.API.Repositories;
 
 namespace TaskManagement.API.Controllers
 {
@@ -13,17 +14,19 @@ namespace TaskManagement.API.Controllers
     public class TasksController : ControllerBase
     {
         private readonly TaskManagementDbContext dbContext;
+        private readonly ITasks tasksRepositories;
 
-        public TasksController(TaskManagementDbContext DbContext)
+        public TasksController(TaskManagementDbContext DbContext, ITasks tasksRepositories)
         {
-            dbContext = DbContext;
+            this.dbContext = DbContext;
+            this.tasksRepositories = tasksRepositories;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            //Get Data From Database - Domain Model
-            var tasks = await dbContext.Taskss.ToListAsync();
+            //Get Data From Database - Repositories Model
+            var tasks = await tasksRepositories.GetAllAsync();
 
             //Map Domain Models to DTOs
             var tasksDto = new List<TasksDto>();
@@ -45,7 +48,7 @@ namespace TaskManagement.API.Controllers
         public async Task<IActionResult> GetById([FromRoute]int id)
         {
             //Get Data From Database - Domain Model
-            var tasks = await dbContext.Taskss.FirstOrDefaultAsync(x => x.TaskId == id);
+            var tasks = await tasksRepositories.GetByIdAsync(id);
 
             if (tasks == null) { return NotFound(); }
 
@@ -97,30 +100,33 @@ namespace TaskManagement.API.Controllers
         [Route("{id}")]
         public async Task<IActionResult> Update([FromRoute]int id, [FromBody]UpdateTaskRequestDto updateTaskRequestDto) 
         {
-            //check if task exist
-            var taskDomainModel = await dbContext.Taskss.FirstOrDefaultAsync(x => x.TaskId == id);
+            //Map DTO to Domain Model
+            var TasksDomainModel = new Tasks
+            {
+                Title = updateTaskRequestDto.Title,
+                Description = updateTaskRequestDto.Description,
+                DueDate = updateTaskRequestDto.DueDate,
+                StatusId = updateTaskRequestDto.StatusId
+            };
 
-            if(taskDomainModel == null)
+            //check if task exist
+            TasksDomainModel = await tasksRepositories.UpdateAsync(id, TasksDomainModel);
+
+            if(TasksDomainModel == null)
             {
                 return NotFound();
             }
-
-            //map DTO to Domain Model
-            taskDomainModel.Title = updateTaskRequestDto.Title;
-            taskDomainModel.Description = updateTaskRequestDto.Description;
-            taskDomainModel.DueDate = updateTaskRequestDto.DueDate;
-            taskDomainModel.StatusId = updateTaskRequestDto.StatusId;
 
             await dbContext.SaveChangesAsync();
 
             //Map Domain Models to DTOs
             var tasksDto = new TasksDto()
             {
-                TaskId = taskDomainModel.TaskId,
-                Title = taskDomainModel.Title,
-                Description = taskDomainModel.Description,
-                DueDate = taskDomainModel.DueDate,
-                StatusId = taskDomainModel.StatusId
+                TaskId = TasksDomainModel.TaskId,
+                Title = TasksDomainModel.Title,
+                Description = TasksDomainModel.Description,
+                DueDate = TasksDomainModel.DueDate,
+                StatusId = TasksDomainModel.StatusId
             };
 
             return Ok(tasksDto);
@@ -131,7 +137,7 @@ namespace TaskManagement.API.Controllers
         public async Task<IActionResult> Delete([FromRoute]int id) 
         {
             //check if task exist
-            var taskDomainModel = await dbContext.Taskss.FirstOrDefaultAsync(x => x.TaskId == id);
+            var taskDomainModel = await tasksRepositories.DeleteAsync(id);
 
             if (taskDomainModel == null)
             {
