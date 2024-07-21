@@ -43,7 +43,7 @@ namespace TaskManagement.API.Repositories
 
         public async Task<Tasks?> GetByIdAsync(int id)
         {
-            return await dbContext.Taskss.FirstOrDefaultAsync(x => x.TaskId == id);
+            return await dbContext.Taskss.Include("Status").FirstOrDefaultAsync(x => x.TaskId == id);
         }
 
         public async Task<Tasks?> UpdateAsync(int id, Tasks task)

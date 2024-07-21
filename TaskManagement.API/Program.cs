@@ -16,8 +16,11 @@ builder.Services.AddDbContext<TaskManagementDbContext>(options =>
 options.UseSqlServer(builder.Configuration.GetConnectionString("TaskManagementConnectionString")));
 
 builder.Services.AddScoped<ITasks, SQLTasksRepositories>();
+builder.Services.AddScoped<IStatus, SQLStatusRepositories>();
 
 builder.Services.AddAutoMapper(typeof(AutoMapperProfiles));
+
+
 
 var app = builder.Build();
 
