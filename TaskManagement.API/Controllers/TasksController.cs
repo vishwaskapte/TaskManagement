@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +14,7 @@ namespace TaskManagement.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class TasksController : ControllerBase
     {
         private readonly TaskManagementDbContext dbContext;
@@ -55,7 +57,7 @@ namespace TaskManagement.API.Controllers
         public async Task<IActionResult> Create([FromBody]AddTaskRequestDto taskRequestDto) 
         {
             //Map or convert DTO to Domain Model
-            var taskDomainModel = mapper.Map<Tasks>(taskRequestDto);
+            var taskDomainModel = mapper.Map<Tasks>(taskRequestDto);  
 
             //Use Domain Model to Create Tasks
             taskDomainModel = await tasksRepositories.CreateAsync(taskDomainModel);
