@@ -14,7 +14,6 @@ namespace TaskManagement.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class TasksController : ControllerBase
     {
         private readonly TaskManagementDbContext dbContext;
@@ -29,6 +28,7 @@ namespace TaskManagement.API.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "User")]
         public async Task<IActionResult> GetAll()
         {
             //Get Data From Database - Repositories Model
@@ -40,6 +40,7 @@ namespace TaskManagement.API.Controllers
 
         [HttpGet]
         [Route("{id}")]
+        [Authorize(Roles = "User")]
         public async Task<IActionResult> GetById([FromRoute]int id)
         {
             //Get Data From Database - Domain Model
@@ -54,6 +55,7 @@ namespace TaskManagement.API.Controllers
 
         [HttpPost]
         [ValidateModel]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([FromBody]AddTaskRequestDto taskRequestDto) 
         {
             //Map or convert DTO to Domain Model
@@ -71,6 +73,7 @@ namespace TaskManagement.API.Controllers
         [HttpPut]
         [Route("{id}")]
         [ValidateModel]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update([FromRoute]int id, [FromBody]UpdateTaskRequestDto updateTaskRequestDto) 
         {
             //Map DTO to Domain Model
@@ -92,6 +95,7 @@ namespace TaskManagement.API.Controllers
 
         [HttpDelete]
         [Route("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete([FromRoute]int id) 
         {
             //check if task exist
