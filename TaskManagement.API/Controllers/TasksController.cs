@@ -19,23 +19,28 @@ namespace TaskManagement.API.Controllers
         private readonly TaskManagementDbContext dbContext;
         private readonly ITasks tasksRepositories;
         private readonly IMapper mapper;
+        private readonly ILogger<TasksController> logger;
 
-        public TasksController(TaskManagementDbContext DbContext, ITasks tasksRepositories, IMapper mapper)
+        public TasksController(TaskManagementDbContext DbContext, ITasks tasksRepositories, IMapper mapper, ILogger<TasksController> logger)
         {
             this.dbContext = DbContext;
             this.tasksRepositories = tasksRepositories;
             this.mapper = mapper;
+            this.logger = logger;
         }
 
         [HttpGet]
         [Authorize(Roles = "User")]
         public async Task<IActionResult> GetAll()
         {
+            logger.LogInformation("GetAllTasks Action Method was invoked");
             //Get Data From Database - Repositories Model
             var tasks = await tasksRepositories.GetAllAsync();
 
+            logger.LogInformation("GetAllTasks Action Method was completed");
+
             //Return DTO's
-             return Ok(mapper.Map<List<TasksDto>>(tasks));
+            return Ok(mapper.Map<List<TasksDto>>(tasks));
         }
 
         [HttpGet]
